@@ -1,5 +1,8 @@
 package dentaku.nocc.regex;
 
+/**
+ * 正規表現同士の連結を表す正規表現ノード
+ */
 public class ConcatRegexNode extends RegexNode {
     private final RegexNode m_left;
     private final RegexNode m_right;

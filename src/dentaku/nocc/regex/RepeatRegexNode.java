@@ -1,5 +1,8 @@
 package dentaku.nocc.regex;
 
+/**
+ * 正規表現の0回以上の繰り返しを表す正規表現ノード
+ */
 public class RepeatRegexNode extends RegexNode {
     private final RegexNode m_node;
 

@@ -1,5 +1,8 @@
 package dentaku.nocc.regex;
 
+/**
+ * 何も読み取らない正規表現ノード
+ */
 public class EpsilonRegexNode extends RegexNode {
     @Override
     public <T> T accept(RegexNodeVisitor<T> visitor) {

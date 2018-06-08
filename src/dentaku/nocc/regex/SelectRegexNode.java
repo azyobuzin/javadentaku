@@ -1,5 +1,8 @@
 package dentaku.nocc.regex;
 
+/**
+ * 2つの正規表現のうちのどちらかを選択する正規表現ノード
+ */
 public class SelectRegexNode extends RegexNode {
     private final RegexNode m_left;
     private final RegexNode m_right;

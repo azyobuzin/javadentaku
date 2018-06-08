@@ -1,5 +1,8 @@
 package dentaku.nocc.regex;
 
+/**
+ * 1文字を受理する正規表現ノード
+ */
 public class CharRegexNode extends RegexNode {
     private final char[] m_chars;
 
