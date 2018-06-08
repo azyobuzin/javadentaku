@@ -1,10 +1,12 @@
-package dentaku.nocc;
+package dentaku.nocc.lex;
 
 public class CharRange {
     private final char m_start;
     private final char m_end;
 
     public CharRange(char start, char end) {
+        if (start > end) throw new IllegalArgumentException("start > end");
+
         m_start = start;
         m_end = end;
     }

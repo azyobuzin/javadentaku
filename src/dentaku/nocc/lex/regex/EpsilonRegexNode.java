@@ -1,4 +1,4 @@
-package dentaku.nocc.regex;
+package dentaku.nocc.lex.regex;
 
 /**
  * 何も読み取らない正規表現ノード

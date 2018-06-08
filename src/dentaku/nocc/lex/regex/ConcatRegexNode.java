@@ -1,4 +1,4 @@
-package dentaku.nocc.regex;
+package dentaku.nocc.lex.regex;
 
 /**
  * 正規表現同士の連結を表す正規表現ノード

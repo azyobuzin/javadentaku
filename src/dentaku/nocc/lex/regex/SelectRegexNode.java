@@ -1,4 +1,4 @@
-package dentaku.nocc.regex;
+package dentaku.nocc.lex.regex;
 
 /**
  * 2つの正規表現のうちのどちらかを選択する正規表現ノード

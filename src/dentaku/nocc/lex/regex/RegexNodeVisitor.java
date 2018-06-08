@@ -1,4 +1,4 @@
-package dentaku.nocc.regex;
+package dentaku.nocc.lex.regex;
 
 /**
  * {@link RegexNode} の visitor パターン実装
