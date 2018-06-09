@@ -14,8 +14,8 @@ public final class NfaPrinter {
     public static void writeDotTo(NfaState startState, Writer output) {
         PrintWriter pw = new PrintWriter(output);
         pw.println("digraph {");
-        pw.println("rankdir = LR");
-        pw.println("node [shape = circle]");
+        pw.println("    rankdir = LR");
+        pw.println("    node [shape = circle]");
 
         // 到達可能な状態を幅優先で探索して番号をつけておく
         int index = 0;
@@ -36,7 +36,10 @@ public final class NfaPrinter {
 
                 for (NfaEdge edge : state.getOutgoingEdges()) {
                     edges.add(edge);
-                    queue.add(edge.getTo());
+
+                    NfaState to = edge.getTo();
+                    if (!stateMap.containsKey(to))
+                        queue.add(to);
                 }
             }
         }

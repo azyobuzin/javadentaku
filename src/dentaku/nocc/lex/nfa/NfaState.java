@@ -19,7 +19,11 @@ public class NfaState {
         m_outgoingEdges.add(new NfaEdge(this, to, label));
     }
 
+    public void addOutgoingEpsilonEdge(NfaState to) {
+        addOutgoingEdge(to, null);
+    }
+
     public NfaEdge[] getOutgoingEdges() {
-        return m_outgoingEdges.toArray(new NfaEdge[m_outgoingEdges.size()]);
+        return m_outgoingEdges.toArray(new NfaEdge[0]);
     }
 }

@@ -1,33 +1,35 @@
-package dentaku.nocc.lex.nfa;
+package dentaku.nocc.lex.dfa;
 
 import dentaku.nocc.lex.CharRange;
 
 import java.util.Objects;
 
 /**
- * 非決定性有限オートマトンの辺
+ * 決定性有限オートマトンの辺
  */
-public class NfaEdge {
-    private final NfaState m_from;
-    private final NfaState m_to;
+public class DfaEdge {
+    private final DfaState m_from;
+    private final DfaState m_to;
     private final CharRange m_label;
 
-    public NfaEdge(NfaState from, NfaState to, CharRange label) {
+    public DfaEdge(DfaState from, DfaState to, CharRange label) {
         if (from == null) throw new IllegalArgumentException("from が null");
         if (to == null) throw new IllegalArgumentException("to が null");
+        // 中間状態では label が ε になることがあるので、ここでは検証しない
+        // TODO: 本当？
 
         m_from = from;
         m_to = to;
         m_label = label;
     }
 
-    public NfaState getFrom() { return m_from; }
+    public DfaState getFrom() { return m_from; }
 
-    public NfaState getTo() { return m_to; }
-
-    public boolean isEpsilon() { return m_label == null; }
+    public DfaState getTo() { return m_to; }
 
     public CharRange getLabel() { return m_label; }
+
+    boolean isEpsilon() { return m_label == null; }
 
     @Override
     public String toString() {
@@ -39,10 +41,10 @@ public class NfaEdge {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        NfaEdge nfaEdge = (NfaEdge) o;
-        return Objects.equals(m_from, nfaEdge.m_from) &&
-            Objects.equals(m_to, nfaEdge.m_to) &&
-            Objects.equals(m_label, nfaEdge.m_label);
+        DfaEdge dfaEdge = (DfaEdge) o;
+        return Objects.equals(m_from, dfaEdge.m_from) &&
+            Objects.equals(m_to, dfaEdge.m_to) &&
+            Objects.equals(m_label, dfaEdge.m_label);
     }
 
     @Override

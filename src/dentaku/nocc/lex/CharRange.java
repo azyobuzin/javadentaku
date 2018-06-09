@@ -31,4 +31,18 @@ public class CharRange {
                 ? String.valueOf(m_start)
                 : String.format("[%c-%c]", m_start, m_end);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CharRange) {
+            CharRange other = (CharRange) obj;
+            return m_start == other.m_start && m_end == other.m_end;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return m_start << 16 | m_end;
+    }
 }

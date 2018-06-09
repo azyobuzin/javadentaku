@@ -1,6 +1,5 @@
-package dentaku.nocc.lex;
+package dentaku.nocc.lex.nfa;
 
-import dentaku.nocc.lex.nfa.*;
 import dentaku.nocc.lex.regex.*;
 
 import java.io.*;

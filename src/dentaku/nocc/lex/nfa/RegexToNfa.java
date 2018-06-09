@@ -1,6 +1,5 @@
-package dentaku.nocc.lex;
+package dentaku.nocc.lex.nfa;
 
-import dentaku.nocc.lex.nfa.*;
 import dentaku.nocc.lex.regex.*;
 
 public final class RegexToNfa {
@@ -25,7 +24,7 @@ public final class RegexToNfa {
         public NfaRepr visitEpsilonNode(EpsilonRegexNode node) {
             NfaState start = new NfaState();
             NfaState end = new NfaState();
-            start.addOutgoingEdge(end, null);
+            start.addOutgoingEpsilonEdge(end);
             return new NfaRepr(start, end);
         }
 
@@ -43,7 +42,7 @@ public final class RegexToNfa {
             NfaRepr left = node.getLeft().accept(this);
             NfaRepr right = node.getRight().accept(this);
             // ε で接続
-            left.getFinalState().addOutgoingEdge(right.getStartState(), null);
+            left.getFinalState().addOutgoingEpsilonEdge(right.getStartState());
             return new NfaRepr(left.getStartState(), right.getFinalState());
         }
 
@@ -55,13 +54,13 @@ public final class RegexToNfa {
 
             // start から left と right に ε で接続
             NfaState start = new NfaState();
-            start.addOutgoingEdge(left.getStartState(), null);
-            start.addOutgoingEdge(right.getStartState(), null);
+            start.addOutgoingEpsilonEdge(left.getStartState());
+            start.addOutgoingEpsilonEdge(right.getStartState());
 
             // left と right から end に ε で接続
             NfaState end = new NfaState();
-            left.getFinalState().addOutgoingEdge(end, null);
-            right.getFinalState().addOutgoingEdge(end, null);
+            left.getFinalState().addOutgoingEpsilonEdge(end);
+            right.getFinalState().addOutgoingEpsilonEdge(end);
 
             return new NfaRepr(start, end);
         }
@@ -72,11 +71,11 @@ public final class RegexToNfa {
             NfaState repeatState = new NfaState();
             NfaState finalState = new NfaState();
             // repeatState -> r
-            repeatState.addOutgoingEdge(r.getStartState(), null);
+            repeatState.addOutgoingEpsilonEdge(r.getStartState());
             // r -> repeatState
-            r.getFinalState().addOutgoingEdge(repeatState, null);
+            r.getFinalState().addOutgoingEpsilonEdge(repeatState);
             // repeatState -> finalState
-            repeatState.addOutgoingEdge(finalState, null);
+            repeatState.addOutgoingEpsilonEdge(finalState);
             return new NfaRepr(repeatState, finalState);
         }
     }
