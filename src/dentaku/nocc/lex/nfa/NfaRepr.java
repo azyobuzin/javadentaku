@@ -3,11 +3,11 @@ package dentaku.nocc.lex.nfa;
 /**
  * 開始状態と受理状態のセット
  */
-public class NfaRepr<T> {
-    private final NfaState<T> m_startState;
-    private final NfaState<T> m_finalState;
+public class NfaRepr {
+    private final NfaState m_startState;
+    private final NfaState m_finalState;
 
-    public NfaRepr(NfaState<T> startState, NfaState<T> finalState) {
+    public NfaRepr(NfaState startState, NfaState finalState) {
         if (startState == null) throw new IllegalStateException("startState が null");
         if (finalState == null) throw new IllegalStateException("finalState が null");
 
@@ -15,7 +15,7 @@ public class NfaRepr<T> {
         m_finalState = finalState;
     }
 
-    public NfaState<T> getStartState() { return m_startState; }
+    public NfaState getStartState() { return m_startState; }
 
-    public NfaState<T> getFinalState() { return m_finalState; }
+    public NfaState getFinalState() { return m_finalState; }
 }

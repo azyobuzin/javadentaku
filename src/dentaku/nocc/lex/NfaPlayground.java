@@ -26,7 +26,7 @@ class NfaPlayground {
             )
         );
 
-        NfaRepr<Void> nfa = RegexToNfa.convert(decimalRegex);
+        NfaRepr nfa = RegexToNfa.convert(decimalRegex);
 
         try (FileWriter output = new FileWriter("DecimalNfa.dot")) {
             NfaPrinter.writeDotTo(nfa.getStartState(), output);

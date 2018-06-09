@@ -11,7 +11,7 @@ public final class NfaPrinter {
     /**
      * NFA を Graphviz の DOT 言語で出力する
      */
-    public static <T> void writeDotTo(NfaState<T> startState, Writer output) {
+    public static void writeDotTo(NfaState startState, Writer output) {
         PrintWriter pw = new PrintWriter(output);
         pw.println("digraph {");
         pw.println("rankdir = LR");
@@ -19,12 +19,12 @@ public final class NfaPrinter {
 
         // 到達可能な状態を幅優先で探索して番号をつけておく
         int index = 0;
-        Map<NfaState<T>, Integer> stateMap = new HashMap<>();
-        List<NfaEdge<T>> edges = new ArrayList<>();
-        Queue<NfaState<T>> queue = new ArrayDeque<>();
+        Map<NfaState, Integer> stateMap = new HashMap<>();
+        List<NfaEdge> edges = new ArrayList<>();
+        Queue<NfaState> queue = new ArrayDeque<>();
         queue.add(startState);
 
-        NfaState<T> state;
+        NfaState state;
         while ((state = queue.poll()) != null) {
             if (!stateMap.containsKey(state)) {
                 // 状態の書式を出力
@@ -34,7 +34,7 @@ public final class NfaPrinter {
 
                 stateMap.put(state, index++);
 
-                for (NfaEdge<T> edge : state.getOutgoingEdges()) {
+                for (NfaEdge edge : state.getOutgoingEdges()) {
                     edges.add(edge);
                     queue.add(edge.getTo());
                 }
@@ -42,7 +42,7 @@ public final class NfaPrinter {
         }
 
         // すべての辺を出力
-        for (NfaEdge<T> edge : edges) {
+        for (NfaEdge edge : edges) {
             CharRange charRange = edge.getLabel();
             String label = charRange != null ? charRange.toString() : "&epsilon;";
             pw.format(
