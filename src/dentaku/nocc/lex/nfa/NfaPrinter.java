@@ -1,6 +1,7 @@
 package dentaku.nocc.lex.nfa;
 
 import dentaku.nocc.lex.CharRange;
+import dentaku.nocc.util.DotUtil;
 
 import java.io.*;
 import java.util.*;
@@ -15,7 +16,6 @@ public final class NfaPrinter {
         PrintWriter pw = new PrintWriter(output);
         pw.println("digraph {");
         pw.println("    rankdir = LR");
-        pw.println("    node [shape = circle]");
 
         // 到達可能な状態を幅優先で探索して番号をつけておく
         int index = 0;
@@ -28,8 +28,8 @@ public final class NfaPrinter {
         while ((state = queue.poll()) != null) {
             if (!stateMap.containsKey(state)) {
                 // 状態の書式を出力
-                pw.format("    %s [label=%s", indexToId(index), toDotString(Integer.toString(index)));
-                if (state.isFinal()) pw.write(", shape=doublecircle");
+                pw.format("    %s [label=%s", indexToId(index), DotUtil.toDotString(Integer.toString(index)));
+                if (state.isFinal()) pw.write(", peripheries=2");
                 pw.println("]");
 
                 stateMap.put(state, index++);
@@ -52,7 +52,7 @@ public final class NfaPrinter {
                 "    %s -> %s [label=%s]",
                 indexToId(stateMap.get(edge.getFrom())),
                 indexToId(stateMap.get(edge.getTo())),
-                toDotString(label)
+                DotUtil.toDotString(label)
             );
             pw.println();
         }
@@ -62,12 +62,5 @@ public final class NfaPrinter {
 
     private static String indexToId(int index) {
         return String.format("S_%d", index);
-    }
-
-    /**
-     * DOT 言語向けのエスケープ処理
-     */
-    private static String toDotString(String s) {
-        return "\"" + s.replace("\"", "\\\"") + "\"";
     }
 }
