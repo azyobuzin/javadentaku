@@ -4,6 +4,7 @@ import dentaku.nocc.lex.CharRange;
 
 /**
  * 非決定性有限オートマトンの辺
+ *
  * @param <T>
  */
 public class NfaEdge<T> {
@@ -20,13 +21,9 @@ public class NfaEdge<T> {
         m_label = label;
     }
 
-    public static <T> NfaEdge<T> create(NfaState<T> from, NfaState<T> to, CharRange label) {
-        return new NfaEdge<>(from, to, label);
-    }
+    public NfaState<T> getFrom() { return m_from; }
 
-    public static <T> NfaEdge<T> createEpsilon(NfaState<T> from, NfaState<T> to) {
-        return new NfaEdge<>(from, to, null);
-    }
+    public NfaState<T> getTo() { return m_to; }
 
     public boolean isEpsilon() { return m_label == null; }
 
