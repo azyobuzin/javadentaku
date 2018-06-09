@@ -1,6 +1,5 @@
 package dentaku.nocc.lex.dfa;
 
-import dentaku.nocc.lex.nfa.NfaState;
 import dentaku.nocc.util.DotUtil;
 
 import java.io.*;
@@ -27,7 +26,7 @@ public final class DfaPrinter {
                 // 状態の書式を出力
                 String label = stateLabelProvider != null ? stateLabelProvider.getLabel(state) : "";
                 pw.format("    %s [label=%s", indexToId(index), DotUtil.toDotString(label));
-                if (isFinal(state)) pw.write(", peripheries=2");
+                if (state.isFinal()) pw.write(", peripheries=2");
                 pw.println("]");
 
                 stateMap.put(state, index++);
@@ -58,11 +57,5 @@ public final class DfaPrinter {
 
     private static String indexToId(int index) {
         return String.format("S_%d", index);
-    }
-
-    private static boolean isFinal(DfaState state) {
-        // 内包している NFA 状態のどれか 1 つでも受理状態なら受理状態の表示にする
-        return Arrays.stream(state.getIncludedNfaStates())
-            .anyMatch(NfaState::isFinal);
     }
 }

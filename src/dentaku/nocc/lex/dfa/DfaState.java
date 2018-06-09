@@ -30,4 +30,9 @@ public class DfaState {
     public NfaState[] getIncludedNfaStates() {
         return m_includedNfaStates.toArray(new NfaState[0]);
     }
+
+    public boolean isFinal() {
+        // 内包している NFA 状態のどれか 1 つでも受理状態なら受理状態とする
+        return m_includedNfaStates.stream().anyMatch(NfaState::isFinal);
+    }
 }
