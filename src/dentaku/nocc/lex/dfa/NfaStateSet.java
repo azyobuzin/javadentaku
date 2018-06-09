@@ -7,7 +7,7 @@ import java.util.*;
 final class NfaStateSet {
     private final NfaState[] m_states;
 
-    public NfaStateSet(NfaState[] states) {
+    public NfaStateSet(NfaState... states) {
         m_states = states;
     }
 
@@ -24,7 +24,7 @@ final class NfaStateSet {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || !(o instanceof NfaStateSet)) return false;
+        if (!(o instanceof NfaStateSet)) return false;
         NfaStateSet stateSet = (NfaStateSet) o;
         return Arrays.equals(m_states, stateSet.m_states);
     }

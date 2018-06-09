@@ -15,8 +15,7 @@ public class DfaEdge {
     public DfaEdge(DfaState from, DfaState to, CharRange label) {
         if (from == null) throw new IllegalArgumentException("from が null");
         if (to == null) throw new IllegalArgumentException("to が null");
-        // 中間状態では label が ε になることがあるので、ここでは検証しない
-        // TODO: 本当？
+        if (label == null) throw new IllegalArgumentException("label が null");
 
         m_from = from;
         m_to = to;
@@ -29,12 +28,9 @@ public class DfaEdge {
 
     public CharRange getLabel() { return m_label; }
 
-    boolean isEpsilon() { return m_label == null; }
-
     @Override
     public String toString() {
-        String label = isEpsilon() ? "ε" : getLabel().toString();
-        return String.format("%s -%s-> %s", getFrom(), label, getTo());
+        return String.format("%s -%s-> %s", getFrom(), getLabel(), getTo());
     }
 
     @Override

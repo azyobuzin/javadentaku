@@ -1,22 +1,15 @@
 package dentaku.nocc.lex.dfa;
 
+import dentaku.nocc.lex.CharRange;
 import dentaku.nocc.lex.nfa.NfaEdge;
 import dentaku.nocc.lex.nfa.NfaState;
+import dentaku.nocc.util.ImmutablePair;
 
 import java.util.*;
+import java.util.stream.*;
 
 public final class NfaToDfa {
     private NfaToDfa() { }
-
-    /**
-     * 今回の {@link #merge(DfaState)} で変更があったかどうか
-     */
-    private boolean m_changed;
-
-    /**
-     * NFA 状態の集合から、それに一致する DFA 状態を引き出すための Map
-     */
-    private final Map<NfaStateSet, DfaState> m_stateSetMap = new HashMap<>();
 
     /**
      * NFA から DFA に変換する
@@ -25,89 +18,77 @@ public final class NfaToDfa {
      * @return 初期状態
      */
     public static DfaState convert(NfaState nfaStartState) {
-        NfaToDfa self = new NfaToDfa();
-        DfaState dfaStartState = self.copyAutomaton(nfaStartState);
+        Map<NfaStateSet, Set<IntermediateEdge>> knownDfaStates = new HashMap<>();
 
-        do {
-            self.m_changed = false;
-            self.m_stateSetMap.clear();
-            dfaStartState = self.merge(dfaStartState);
-        } while (self.m_changed);
+        NfaStateSet firstStateSet = new NfaStateSet(findStatesReachableByEpsilonTransition(nfaStartState));
+        knownDfaStates.put(firstStateSet, new HashSet<>());
 
-        return dfaStartState;
-    }
-
-    /**
-     * {@link NfaState} を {@link DfaState} に型変換する
-     *
-     * @param nfaStartState 初期状態
-     * @return 初期状態
-     */
-    private DfaState copyAutomaton(NfaState nfaStartState) {
-        Map<NfaState, DfaState> map = new HashMap<>();
-
-        // 全状態のコピー
         {
-            Deque<NfaState> stack = new ArrayDeque<>();
-            stack.addFirst(nfaStartState);
+            Deque<NfaStateSet> stack = new ArrayDeque<>();
+            stack.addFirst(firstStateSet);
 
-            NfaState nfaState;
-            while ((nfaState = stack.pollFirst()) != null) {
-                if (!map.containsKey(nfaState)) {
-                    DfaState dfaState = new DfaState();
-                    dfaState.includeNfaState(nfaState);
-                    map.put(nfaState, dfaState);
+            NfaStateSet stateSet;
+            while ((stateSet = stack.pollFirst()) != null) {
+                // 遷移先探索
+                Map<Character, NfaStateSet> transitionMap = createTransitionMap(stateSet);
 
-                    for (NfaEdge edge : nfaState.getOutgoingEdges()) {
-                        NfaState to = edge.getTo();
-                        if (!map.containsKey(to))
-                            stack.addFirst(edge.getTo());
+                Set<IntermediateEdge> edges = knownDfaStates.get(stateSet);
+
+                for (Map.Entry<Character, NfaStateSet> entry : transitionMap.entrySet()) {
+                    NfaStateSet destStateSet = entry.getValue();
+
+                    // まだ探索していない集合ならスタックに追加
+                    if (!knownDfaStates.containsKey(destStateSet)) {
+                        knownDfaStates.put(destStateSet, new HashSet<>());
+                        stack.addFirst(destStateSet);
                     }
+
+                    // 辺として登録
+                    edges.add(new IntermediateEdge(destStateSet, entry.getKey()));
                 }
             }
         }
 
-        // 辺のコピー
-        for (Map.Entry<NfaState, DfaState> entry : map.entrySet()) {
-            NfaState nfaState = entry.getKey();
-            DfaState dfaState = entry.getValue();
-
-            for (NfaEdge edge : nfaState.getOutgoingEdges())
-                dfaState.addOutgoingEdge(map.get(edge.getTo()), edge.getLabel());
+        // DfaState クラスに変換していく
+        Map<NfaStateSet, DfaState> dfaStateMap = new HashMap<>();
+        for (NfaStateSet stateSet : knownDfaStates.keySet()) {
+            DfaState dfaState = new DfaState();
+            for (NfaState nfaState : stateSet.getStates())
+                dfaState.includeNfaState(nfaState);
+            dfaStateMap.put(stateSet, dfaState);
         }
 
-        return map.get(nfaStartState);
-    }
-
-    /**
-     * {@link #m_stateSetMap} に {@code state} を登録する
-     */
-    private void registerDfaStateToMap(DfaState state) {
-        NfaStateSet stateSet = new NfaStateSet(state.getIncludedNfaStates());
-        DfaState oldValue = m_stateSetMap.putIfAbsent(stateSet, state);
-
-        if (oldValue != null && oldValue != state) {
-            // 相互に接続して次の merge で統合する
-            oldValue.addOutgoingEdge(state, null);
-            state.addOutgoingEdge(oldValue, null);
+        // 辺の接続
+        for (Map.Entry<NfaStateSet, Set<IntermediateEdge>> entry : knownDfaStates.entrySet()) {
+            DfaState sourceState = dfaStateMap.get(entry.getKey());
+            for (ImmutablePair<NfaStateSet, CharRange> edgeData : createEdges(entry.getValue())) {
+                sourceState.addOutgoingEdge(
+                    dfaStateMap.get(edgeData.item1),
+                    edgeData.item2
+                );
+            }
         }
+
+        return dfaStateMap.get(firstStateSet);
     }
 
     /**
      * {@code state} および {@code state} からε遷移で到達できる状態を探索
      */
-    private static Set<DfaState> findStatesReachableByEpsilonTransition(DfaState state) {
-        Set<DfaState> result = new HashSet<>();
-        Deque<DfaState> stack = new ArrayDeque<>();
+    private static Set<NfaState> findStatesReachableByEpsilonTransition(NfaState state) {
+        Set<NfaState> result = new HashSet<>();
+        Deque<NfaState> stack = new ArrayDeque<>();
+
+        result.add(state);
         stack.addFirst(state);
+
         while ((state = stack.pollFirst()) != null) {
-            if (result.add(state)) {
-                for (DfaEdge edge : state.getOutgoingEdges()) {
-                    if (edge.isEpsilon()) {
-                        DfaState to = edge.getTo();
-                        if (!result.contains(to))
-                            stack.addFirst(to);
-                    }
+            for (NfaEdge edge : state.getOutgoingEdges()) {
+                if (edge.isEpsilon()) {
+                    NfaState to = edge.getTo();
+
+                    if (result.add(to))
+                        stack.addFirst(to);
                 }
             }
         }
@@ -115,41 +96,68 @@ public final class NfaToDfa {
         return result;
     }
 
-    private DfaState merge(DfaState state) {
-        Set<DfaState> stateSet = findStatesReachableByEpsilonTransition(state);
-
-        TransitionMap transitionMap = new TransitionMap();
-
-        if (stateSet.size() > 1) {
-            // 2 個以上ある → ε遷移ができるのでまとめる
-            state = new DfaState();
-            for (DfaState dfaState : stateSet)
-            {
-                for (NfaState nfaState : dfaState.getIncludedNfaStates())
-                    state.includeNfaState(nfaState);
-
-                for (DfaEdge edge : dfaState.getOutgoingEdges())
-                {
-                    if (!edge.isEpsilon())
-                        transitionMap.put(edge.getLabel(), edge.getTo());
-                }
-            }
-            m_changed = true;
-        }
-
-        registerDfaStateToMap(state);
-
-        // TODO: 遷移先重複チェック
-        for (DfaEdge edge : state.)
-
-        return state;
+    /**
+     * {@code sourceStateSet} から次に遷移可能な状態の集合を探す
+     */
+    private static Map<Character, NfaStateSet> createTransitionMap(NfaStateSet sourceStateSet) {
+        return Arrays.stream(sourceStateSet.getStates())
+            .flatMap(state -> Arrays.stream(state.getOutgoingEdges()))
+            .filter(edge -> !edge.isEpsilon())
+            .flatMap(edge -> {
+                CharRange charRange = edge.getLabel();
+                return findStatesReachableByEpsilonTransition(edge.getTo()).stream()
+                    .flatMap(reachableState ->
+                        IntStream.rangeClosed(charRange.getStart(), charRange.getEnd())
+                            .mapToObj(c -> new ImmutablePair<>((char) c, reachableState)));
+            })
+            .collect(Collectors.groupingBy(
+                p -> p.item1,
+                Collectors.collectingAndThen(
+                    Collectors.mapping(p -> p.item2, Collectors.toSet()),
+                    NfaStateSet::new
+                )
+            ));
     }
 
-    private DfaState createDfaState(NfaStateSet nfaStates) {
-        DfaState newState = new DfaState();
-        for (NfaState s : nfaStates.getStates())
-            newState.includeNfaState(s);
+    /**
+     * {@code intermediateEdges} をうまく {@link CharRange} にまとめる
+     */
+    private static List<ImmutablePair<NfaStateSet, CharRange>> createEdges(Set<IntermediateEdge> intermediateEdges) {
+        Set<Map.Entry<NfaStateSet, List<Character>>> destGrouping =
+            intermediateEdges.stream()
+                .collect(Collectors.groupingBy(
+                    IntermediateEdge::getTo,
+                    Collectors.mapping(IntermediateEdge::getLabel, Collectors.toList())))
+                .entrySet();
 
-        registerDfaStateToMap(newState);
+        List<ImmutablePair<NfaStateSet, CharRange>> result = new ArrayList<>();
+
+        for (Map.Entry<NfaStateSet, List<Character>> entry : destGrouping) {
+            NfaStateSet dest = entry.getKey();
+            List<Character> charList = entry.getValue();
+            if (charList.size() == 0) continue;
+
+            Collections.sort(charList);
+
+            int startIndex = 0;
+            for (int i = 1; i < charList.size(); i++) {
+                if (charList.get(i - 1) + 1 != charList.get(i)) {
+                    // 連続になっていないのでここで区切り
+                    result.add(new ImmutablePair<>(
+                        dest,
+                        new CharRange(charList.get(startIndex), charList.get(i - 1))
+                    ));
+                    startIndex = i;
+                }
+            }
+
+            // 残りの部分
+            result.add(new ImmutablePair<>(
+                dest,
+                new CharRange(charList.get(startIndex), charList.get(charList.size() - 1))
+            ));
+        }
+
+        return result;
     }
 }
