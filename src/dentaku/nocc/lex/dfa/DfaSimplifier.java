@@ -1,8 +1,10 @@
 package dentaku.nocc.lex.dfa;
 
 import dentaku.nocc.lex.CharRange;
+import dentaku.nocc.util.ImmutablePair;
 
 import java.util.*;
+import java.util.stream.*;
 
 public final class DfaSimplifier {
     private DfaSimplifier() { }
@@ -35,27 +37,49 @@ public final class DfaSimplifier {
             }
         }
 
-        List<Set<DfaState>> sets = new ArrayList<>();
-        sets.addAll(stateMap.values());
-        sets.addAll(finalStateMap.values());
+        // 最初の分割をまとめる
+        List<ImmutablePair<EdgeLabelSet, Set<DfaState>>> sets =
+            Stream.concat(stateMap.entrySet().stream(), finalStateMap.entrySet().stream())
+                .map(entry -> new ImmutablePair<>(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+
+        // 状態から、状態が所属している集合を引けるようにする
+        Map<DfaState, Set<DfaState>> stateSetMap = sets.stream()
+            .flatMap(pair -> pair.item2.stream().map(state -> new ImmutablePair<>(state, pair.item2)))
+            .collect(Collectors.toMap(pair -> pair.item1, pair -> pair.item2));
 
         for (int setIndex = 0; setIndex < sets.size(); setIndex++) {
-            Set<DfaState> currentSet = sets.get(setIndex);
+            ImmutablePair<EdgeLabelSet, Set<DfaState>> pair = sets.get(setIndex);
+            EdgeLabelSet labelSet = pair.item1;
+            Set<DfaState> currentSet = pair.item2;
 
             while (currentSet.size() > 1) {
-                Set<DfaState> newSet = new HashSet<>(currentSet); // 分割された新しい集合になるもの
+                Optional<Collection<List<DfaState>>> op =
+                    labelSet.charStream() // ラベル 1 文字ずつについて
+                        .mapToObj(c -> currentSet.stream().collect(
+                            // 遷移先状態集合でグルーピング
+                            Collectors.groupingBy(state ->
+                                Arrays.stream(state.getOutgoingEdges())
+                                    .map(edge -> stateSetMap.get(edge.getTo()))
+                                    .collect(Collectors.toSet()))
+                        ))
+                        .filter(map -> map.size() > 1) // 全部同じ遷移先ではない
+                        .map(Map::values)
+                        .findAny();
 
-                for (DfaState state : currentSet) {
-                    if (Arrays.stream(state.getOutgoingEdges())
-                        .allMatch(edge -> currentSet.contains(edge.getTo()))) {
-                        newSet.remove(state); // 分割しなくてよい
+                if (op.isPresent()) {
+                    // 分割を行う
+                    for (List<DfaState> destinationGroup : op.get()) {
+                        Set<DfaState> newSet = new HashSet<>();
+
+                        for (DfaState state : destinationGroup) {
+                            newSet.add(state);
+                            currentSet.remove(state);
+                            stateSetMap.put(state, newSet); // 状態集合逆引きも更新
+                        }
+
+                        sets.add(new ImmutablePair<>(labelSet, newSet));
                     }
-                }
-
-                if (newSet.size() > 0) {
-                    // 今見ている集合から分割されたものを削除する
-                    currentSet.removeAll(newSet);
-                    sets.add(newSet);
                 } else {
                     // これ以上分割できないなら次の集合へ
                     break;
@@ -109,6 +133,11 @@ public final class DfaSimplifier {
         }
 
         public CharRange[] getCharRanges() { return m_charRanges; }
+
+        public IntStream charStream() {
+            return Arrays.stream(m_charRanges)
+                .flatMapToInt(range -> IntStream.rangeClosed(range.getStart(), range.getEnd()));
+        }
 
         @Override
         public boolean equals(Object o) {
