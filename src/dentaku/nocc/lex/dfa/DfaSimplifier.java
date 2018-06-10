@@ -62,12 +62,15 @@ public final class DfaSimplifier {
             .flatMap(pair -> pair.item2.stream().map(state -> new ImmutablePair<>(state, pair.item2)))
             .collect(Collectors.toMap(pair -> pair.item1, pair -> pair.item2));
 
-        for (int setIndex = 0; setIndex < sets.size(); setIndex++) {
-            ImmutablePair<EdgeLabelSet, Set<DfaState>> pair = sets.get(setIndex);
-            EdgeLabelSet labelSet = pair.item1;
-            Set<DfaState> currentSet = pair.item2;
+        TG_LOOP:
+        while (true) {
+            for (int setIndex = 0; setIndex < sets.size(); setIndex++) {
+                ImmutablePair<EdgeLabelSet, Set<DfaState>> pair = sets.get(setIndex);
+                EdgeLabelSet labelSet = pair.item1;
+                Set<DfaState> currentSet = pair.item2;
 
-            while (currentSet.size() > 1) {
+                if (currentSet.size() <= 1) continue;
+
                 Optional<Collection<List<DfaState>>> op =
                     labelSet.charStream() // ラベル 1 文字ずつについて
                         .mapToObj(c -> currentSet.stream().collect(
@@ -83,7 +86,11 @@ public final class DfaSimplifier {
 
                 if (op.isPresent()) {
                     // 分割を行う
-                    for (List<DfaState> groupStates : op.get()) {
+                    Iterator<List<DfaState>> iter = op.get().iterator();
+                    iter.next(); // 最初の 1 グループは currentSet に残しておく
+
+                    while (iter.hasNext()) {
+                        List<DfaState> groupStates = iter.next();
                         Set<DfaState> newSet = new HashSet<>();
 
                         for (DfaState state : groupStates) {
@@ -94,11 +101,14 @@ public final class DfaSimplifier {
 
                         sets.add(new ImmutablePair<>(labelSet, newSet));
                     }
-                } else {
-                    // これ以上分割できないなら次の集合へ
-                    break;
+
+                    // 分割を行ったら最初からチェックし直す
+                    continue TG_LOOP;
                 }
             }
+
+            // すべてのチェックが完了
+            break;
         }
 
         // 集合に対応する状態を作成
