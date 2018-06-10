@@ -28,16 +28,26 @@ class RegexPlayground {
         );
 
         NfaRepr nfa = RegexToNfa.convert(decimalRegex);
-
-        try (FileWriter output = new FileWriter("DecimalNfa.dot")) {
-            NfaPrinter.writeDotTo(nfa.getStartState(), output);
-        }
+        saveNfa(nfa.getStartState(), "DecimalNfa.dot");
 
         DfaState dfa = NfaToDfa.convert(nfa.getStartState());
 
-        try (FileWriter output = new FileWriter("DecimalDfa.dot")) {
-            DfaStateLabelProvider stateLabelProvider = new DefaultDfaStateLabelProvider(nfa.getStartState());
-            DfaPrinter.writeDotTo(dfa, output, stateLabelProvider);
+        DfaStateLabelProvider stateLabelProvider = new DefaultDfaStateLabelProvider(nfa.getStartState());
+        saveDfa(dfa, "DecimalDfa.dot", stateLabelProvider);
+
+        DfaState dfaSimplified = DfaSimplifier.simplify(dfa);
+        saveDfa(dfaSimplified, "DecimalDfaSimplified.dot", stateLabelProvider);
+    }
+
+    private static void saveNfa(NfaState startState, String fileName) throws IOException {
+        try (FileWriter output = new FileWriter(fileName)) {
+            NfaPrinter.writeDotTo(startState, output);
+        }
+    }
+
+    private static void saveDfa(DfaState startState, String fileName, DfaStateLabelProvider stateLabelProvider) throws IOException {
+        try (FileWriter output = new FileWriter(fileName)) {
+            DfaPrinter.writeDotTo(startState, output, stateLabelProvider);
         }
     }
 }

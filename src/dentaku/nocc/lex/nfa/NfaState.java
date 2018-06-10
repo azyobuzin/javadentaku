@@ -8,7 +8,7 @@ import java.util.*;
  * 非決定性有限オートマトンの状態
  */
 public class NfaState {
-    private final List<NfaEdge> m_outgoingEdges = new ArrayList<>();
+    private final Set<NfaEdge> m_outgoingEdges = new HashSet<>();
     private boolean m_isFinal;
 
     public boolean isFinal() { return m_isFinal; }
@@ -23,6 +23,7 @@ public class NfaState {
         addOutgoingEdge(to, null);
     }
 
+    // TODO: unmodifiableSet
     public NfaEdge[] getOutgoingEdges() {
         return m_outgoingEdges.toArray(new NfaEdge[0]);
     }

@@ -26,7 +26,9 @@ public final class DfaSimplifier {
 
                 // 受理状態と他の状態を分けて、さらに辺のラベルリストで分ける
                 (state.isFinal() ? finalStateMap : stateMap)
-                    .computeIfAbsent(new EdgeLabelSet(edges), k -> new HashSet<>())
+                    .computeIfAbsent(
+                        new EdgeLabelSet(Arrays.stream(edges).map(DfaEdge::getLabel)),
+                        k -> new HashSet<>())
                     .add(state);
 
                 for (DfaEdge edge : edges) {
@@ -87,46 +89,75 @@ public final class DfaSimplifier {
             }
         }
 
-        Map<DfaState, DfaState> mergedStateMap = new HashMap<>();
+        // 集合に対応する状態を作成
+        Map<Set<DfaState>, DfaState> newStateMap =
+            sets.stream().map(pair -> pair.item2)
+                .filter(set -> set.size() > 0)
+                .collect(Collectors.toMap(
+                    set -> set,
+                    set -> {
+                        DfaState newState = new DfaState();
+                        set.stream().flatMap(s -> Arrays.stream(s.getIncludedNfaStates()))
+                            .forEach(newState::includeNfaState);
+                        return newState;
+                    }));
 
+        // 辺をつなぐ
+        for (Map.Entry<Set<DfaState>, DfaState> entry : newStateMap.entrySet()) {
+            final Set<DfaState> set = entry.getKey();
+            final DfaState newState = entry.getValue();
 
-        // TODO: 再合成
-        throw new UnsupportedOperationException();
+            set.stream().flatMap(state -> Arrays.stream(state.getOutgoingEdges()))
+                .map(edge -> new ImmutablePair<>(newStateMap.get(stateSetMap.get(edge.getTo())), edge.getLabel()))
+                .collect(Collectors.groupingBy( // 遷移先でグルーピング
+                    pair -> pair.item1,
+                    Collectors.collectingAndThen(
+                        Collectors.mapping(pair -> pair.item2, Collectors.toList()),
+                        charRanges -> new EdgeLabelSet(charRanges.stream())
+                    )
+                ))
+                .entrySet().stream()
+                // CharRange ごとに分解
+                .flatMap(e -> Arrays.stream(e.getValue().getCharRanges())
+                    .map(range -> new ImmutablePair<>(e.getKey(), range)))
+                // 辺を追加
+                .forEach(pair -> newState.addOutgoingEdge(pair.item1, pair.item2));
+        }
+
+        return newStateMap.get(stateSetMap.get(startState));
     }
 
     private static final class EdgeLabelSet {
         private final CharRange[] m_charRanges;
 
-        public EdgeLabelSet(DfaEdge[] edges) {
-            if (edges.length == 0) {
-                m_charRanges = new CharRange[0];
-                return;
-            }
-            if (edges.length == 1) {
-                m_charRanges = new CharRange[]{edges[0].getLabel()};
-                return;
-            }
-
-            List<CharRange> charRanges = new ArrayList<>();
-            for (DfaEdge edge : edges)
-                charRanges.add(edge.getLabel());
-
+        public EdgeLabelSet(Stream<CharRange> charRangeStream) {
             // 開始順にソート
-            charRanges.sort(Comparator.comparingInt(CharRange::getStart));
+            List<CharRange> charRanges = charRangeStream
+                .sorted(Comparator.comparingInt(CharRange::getStart))
+                .collect(Collectors.toList());
 
-            ListIterator<CharRange> iter = charRanges.listIterator();
-            CharRange prev = iter.next();
-            while (iter.hasNext()) {
-                CharRange current = iter.next();
+            switch (charRanges.size()) {
+                case 0:
+                    m_charRanges = new CharRange[0];
+                    return;
+                case 1:
+                    m_charRanges = new CharRange[]{charRanges.get(0)};
+                    return;
+            }
+
+            for (int i = 1; i < charRanges.size(); ) {
+                CharRange prev = charRanges.get(i - 1);
+                CharRange current = charRanges.get(i);
+
                 if (current.getStart() <= prev.getEnd() + 1) {
                     // マージ可能
                     char end = current.getEnd() >= prev.getEnd() ? current.getEnd() : prev.getEnd();
-                    current = new CharRange(prev.getStart(), end);
-
-                    iter.remove();
-                    iter.set(current);
+                    charRanges.remove(i);
+                    charRanges.set(i - 1, new CharRange(prev.getStart(), end));
+                } else {
+                    // マージしない場合は次のインデックスへ
+                    i++;
                 }
-                prev = current;
             }
 
             m_charRanges = charRanges.toArray(new CharRange[0]);

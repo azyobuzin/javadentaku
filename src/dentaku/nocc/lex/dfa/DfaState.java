@@ -9,7 +9,7 @@ import java.util.*;
  * 決定性有限オートマトンの状態
  */
 public class DfaState {
-    private final List<DfaEdge> m_outgoingEdges = new ArrayList<>();
+    private final Set<DfaEdge> m_outgoingEdges = new HashSet<>();
     private final Set<NfaState> m_includedNfaStates = new HashSet<>();
 
     public void addOutgoingEdge(DfaState to, CharRange label) {
@@ -23,10 +23,12 @@ public class DfaState {
         m_includedNfaStates.add(nfaState);
     }
 
+    // TODO: unmodifiableSet
     public DfaEdge[] getOutgoingEdges() {
         return m_outgoingEdges.toArray(new DfaEdge[0]);
     }
 
+    // TODO: unmodifiableSet
     public NfaState[] getIncludedNfaStates() {
         return m_includedNfaStates.toArray(new NfaState[0]);
     }
