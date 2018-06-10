@@ -40,24 +40,31 @@ public final class DfaSimplifier {
         sets.addAll(finalStateMap.values());
 
         for (int setIndex = 0; setIndex < sets.size(); setIndex++) {
-            Set<DfaState> set = sets.get(setIndex);
+            Set<DfaState> currentSet = sets.get(setIndex);
 
-            while (true) {
-                Optional<DfaEdge> outsideEdge = set.stream()
-                    .flatMap(state -> Arrays.stream(state.getOutgoingEdges()))
-                    .filter(edge -> !set.contains(edge.getTo()))
-                    .findAny();
+            while (currentSet.size() > 1) {
+                Set<DfaState> newSet = new HashSet<>(currentSet); // 分割された新しい集合になるもの
 
-                if (outsideEdge.isPresent()) {
-                    // 別の集合に分割
-                    DfaState sourceState = outsideEdge.get().getFrom();
-                    set.remove(sourceState);
-                    sets.add(Set.of(sourceState));
+                for (DfaState state : currentSet) {
+                    if (Arrays.stream(state.getOutgoingEdges())
+                        .allMatch(edge -> currentSet.contains(edge.getTo()))) {
+                        newSet.remove(state); // 分割しなくてよい
+                    }
+                }
+
+                if (newSet.size() > 0) {
+                    // 今見ている集合から分割されたものを削除する
+                    currentSet.removeAll(newSet);
+                    sets.add(newSet);
                 } else {
+                    // これ以上分割できないなら次の集合へ
                     break;
                 }
             }
         }
+
+        Map<DfaState, DfaState> mergedStateMap = new HashMap<>();
+
 
         // TODO: 再合成
         throw new UnsupportedOperationException();
