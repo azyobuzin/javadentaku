@@ -18,24 +18,24 @@ public final class NfaToDfa {
      * @return 初期状態
      */
     public static DfaState convert(NfaState nfaStartState) {
-        Map<NfaStateSet, Set<IntermediateEdge>> knownDfaStates = new HashMap<>();
+        Map<Set<NfaState>, Set<IntermediateEdge>> knownDfaStates = new HashMap<>();
 
-        NfaStateSet firstStateSet = new NfaStateSet(findStatesReachableByEpsilonTransition(nfaStartState));
+        Set<NfaState> firstStateSet = findStatesReachableByEpsilonTransition(nfaStartState);
         knownDfaStates.put(firstStateSet, new HashSet<>());
 
         {
-            Deque<NfaStateSet> stack = new ArrayDeque<>();
+            Deque<Set<NfaState>> stack = new ArrayDeque<>();
             stack.addFirst(firstStateSet);
 
-            NfaStateSet stateSet;
+            Set<NfaState> stateSet;
             while ((stateSet = stack.pollFirst()) != null) {
                 // 遷移先探索
-                Map<Character, NfaStateSet> transitionMap = createTransitionMap(stateSet);
+                Map<Character, Set<NfaState>> transitionMap = createTransitionMap(stateSet);
 
                 Set<IntermediateEdge> edges = knownDfaStates.get(stateSet);
 
-                for (Map.Entry<Character, NfaStateSet> entry : transitionMap.entrySet()) {
-                    NfaStateSet destStateSet = entry.getValue();
+                for (Map.Entry<Character, Set<NfaState>> entry : transitionMap.entrySet()) {
+                    Set<NfaState> destStateSet = entry.getValue();
 
                     // まだ探索していない集合ならスタックに追加
                     if (!knownDfaStates.containsKey(destStateSet)) {
@@ -50,18 +50,18 @@ public final class NfaToDfa {
         }
 
         // DfaState クラスに変換していく
-        Map<NfaStateSet, DfaState> dfaStateMap = new HashMap<>();
-        for (NfaStateSet stateSet : knownDfaStates.keySet()) {
+        Map<Set<NfaState>, DfaState> dfaStateMap = new HashMap<>();
+        for (Set<NfaState> stateSet : knownDfaStates.keySet()) {
             DfaState dfaState = new DfaState();
-            for (NfaState nfaState : stateSet.getStates())
+            for (NfaState nfaState : stateSet)
                 dfaState.includeNfaState(nfaState);
             dfaStateMap.put(stateSet, dfaState);
         }
 
         // 辺の接続
-        for (Map.Entry<NfaStateSet, Set<IntermediateEdge>> entry : knownDfaStates.entrySet()) {
+        for (Map.Entry<Set<NfaState>, Set<IntermediateEdge>> entry : knownDfaStates.entrySet()) {
             DfaState sourceState = dfaStateMap.get(entry.getKey());
-            for (ImmutablePair<NfaStateSet, CharRange> edgeData : createEdges(entry.getValue())) {
+            for (ImmutablePair<Set<NfaState>, CharRange> edgeData : createEdges(entry.getValue())) {
                 sourceState.addOutgoingEdge(
                     dfaStateMap.get(edgeData.item1),
                     edgeData.item2
@@ -99,8 +99,8 @@ public final class NfaToDfa {
     /**
      * {@code sourceStateSet} から次に遷移可能な状態の集合を探す
      */
-    private static Map<Character, NfaStateSet> createTransitionMap(NfaStateSet sourceStateSet) {
-        return Arrays.stream(sourceStateSet.getStates())
+    private static Map<Character, Set<NfaState>> createTransitionMap(Set<NfaState> sourceStateSet) {
+        return sourceStateSet.stream()
             .flatMap(state -> Arrays.stream(state.getOutgoingEdges()))
             .filter(edge -> !edge.isEpsilon())
             .flatMap(edge -> {
@@ -112,28 +112,25 @@ public final class NfaToDfa {
             })
             .collect(Collectors.groupingBy(
                 p -> p.item1,
-                Collectors.collectingAndThen(
-                    Collectors.mapping(p -> p.item2, Collectors.toSet()),
-                    NfaStateSet::new
-                )
+                Collectors.mapping(p -> p.item2, Collectors.toSet())
             ));
     }
 
     /**
      * {@code intermediateEdges} をうまく {@link CharRange} にまとめる
      */
-    private static List<ImmutablePair<NfaStateSet, CharRange>> createEdges(Set<IntermediateEdge> intermediateEdges) {
-        Set<Map.Entry<NfaStateSet, List<Character>>> destGrouping =
+    private static List<ImmutablePair<Set<NfaState>, CharRange>> createEdges(Set<IntermediateEdge> intermediateEdges) {
+        Set<Map.Entry<Set<NfaState>, List<Character>>> destGrouping =
             intermediateEdges.stream()
                 .collect(Collectors.groupingBy(
                     IntermediateEdge::getTo,
                     Collectors.mapping(IntermediateEdge::getLabel, Collectors.toList())))
                 .entrySet();
 
-        List<ImmutablePair<NfaStateSet, CharRange>> result = new ArrayList<>();
+        List<ImmutablePair<Set<NfaState>, CharRange>> result = new ArrayList<>();
 
-        for (Map.Entry<NfaStateSet, List<Character>> entry : destGrouping) {
-            NfaStateSet dest = entry.getKey();
+        for (Map.Entry<Set<NfaState>, List<Character>> entry : destGrouping) {
+            Set<NfaState> dest = entry.getKey();
             List<Character> charList = entry.getValue();
             if (charList.size() == 0) continue;
 

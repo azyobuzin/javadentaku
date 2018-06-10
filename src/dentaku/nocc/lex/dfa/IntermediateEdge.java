@@ -1,22 +1,24 @@
 package dentaku.nocc.lex.dfa;
 
-import java.util.Objects;
+import dentaku.nocc.lex.nfa.NfaState;
+
+import java.util.*;
 
 /**
  * 辺の中間表現（NFA 状態の集合同士を結ぶ）
  */
 final class IntermediateEdge {
-    private final NfaStateSet m_to;
+    private final Set<NfaState> m_to;
     private final char m_label;
 
-    public IntermediateEdge(NfaStateSet to, char label) {
+    public IntermediateEdge(Set<NfaState> to, char label) {
         if (to == null) throw new IllegalArgumentException("to が null");
 
         m_to = to;
         m_label = label;
     }
 
-    public NfaStateSet getTo() { return m_to; }
+    public Set<NfaState> getTo() { return m_to; }
 
     public char getLabel() { return m_label; }
 
