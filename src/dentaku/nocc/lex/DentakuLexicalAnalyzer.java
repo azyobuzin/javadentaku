@@ -13,8 +13,9 @@ public final class DentakuLexicalAnalyzer {
      * 整数および小数の正規表現
      */
     public static RegexNode decimalRegexNode() {
-        // ([0-9]+(\.[0-9]+)?|\.[0-9]+)
-        RegexNode integerRegex = RegexFactory.repeat1(RegexFactory.charRange('0', '9'));
+        // ([0-9]+(\.[0-9]*)?|\.[0-9]+)
+        RegexNode decimalSymbolRegex = RegexFactory.charRange('0', '9');
+        RegexNode integerRegex = RegexFactory.repeat1(decimalSymbolRegex);
         RegexNode dotRegex = RegexFactory.charcter('.');
         return RegexFactory.choice(
             RegexFactory.sequence(
@@ -22,7 +23,7 @@ public final class DentakuLexicalAnalyzer {
                 RegexFactory.maybe(
                     RegexFactory.sequence(
                         dotRegex,
-                        integerRegex
+                        RegexFactory.repeat0(decimalSymbolRegex)
                     )
                 )
             ),

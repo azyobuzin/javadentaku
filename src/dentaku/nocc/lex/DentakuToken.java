@@ -29,6 +29,7 @@ public class DentakuToken {
             case KIND_DIV: return "DIV";
             case KIND_OPEN: return "OPEN";
             case KIND_CLOSE: return "CLOSE";
+            case KIND_EQUAL: return "EQUAL";
         }
         return Integer.toString(getKind());
     }

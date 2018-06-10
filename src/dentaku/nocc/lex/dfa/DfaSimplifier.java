@@ -1,6 +1,7 @@
 package dentaku.nocc.lex.dfa;
 
 import dentaku.nocc.lex.CharRange;
+import dentaku.nocc.lex.nfa.NfaState;
 import dentaku.nocc.util.ImmutablePair;
 
 import java.util.*;
@@ -13,10 +14,10 @@ public final class DfaSimplifier {
         Set<DfaState> stateSet = new HashSet<>();
         stateSet.add(startState);
 
-        Map<EdgeLabelSet, Set<DfaState>> stateMap = new HashMap<>();
-        Map<EdgeLabelSet, Set<DfaState>> finalStateMap = new HashMap<>();
+        Map<EdgeLabelSet, Set<DfaState>> stateLabelMap = new HashMap<>();
 
         {
+            // 深さ優先ですべての状態を探索
             Deque<DfaState> stack = new ArrayDeque<>();
             stack.addFirst(startState);
 
@@ -24,8 +25,8 @@ public final class DfaSimplifier {
             while ((state = stack.pollFirst()) != null) {
                 Set<DfaEdge> edges = state.getOutgoingEdges();
 
-                // 受理状態と他の状態を分けて、さらに辺のラベルリストで分ける
-                (state.isFinal() ? finalStateMap : stateMap)
+                // 辺のラベルリストで分割
+                stateLabelMap
                     .computeIfAbsent(
                         new EdgeLabelSet(edges.stream().map(DfaEdge::getLabel)),
                         k -> new HashSet<>())
@@ -39,10 +40,21 @@ public final class DfaSimplifier {
             }
         }
 
-        // 最初の分割をまとめる
         List<ImmutablePair<EdgeLabelSet, Set<DfaState>>> sets =
-            Stream.concat(stateMap.entrySet().stream(), finalStateMap.entrySet().stream())
-                .map(entry -> new ImmutablePair<>(entry.getKey(), entry.getValue()))
+            stateLabelMap.entrySet().stream()
+                .flatMap(entry -> {
+                    EdgeLabelSet labelSet = entry.getKey();
+                    // 受理状態となる NFA によって分割（受理する NFA 状態が違えば、違う DFA 状態にする）
+                    return entry.getValue().stream()
+                        .collect(Collectors.groupingBy(
+                            dfaState -> dfaState.getIncludedNfaStates().stream()
+                                .filter(NfaState::isFinal)
+                                .collect(Collectors.toSet()),
+                            Collectors.toSet()
+                        ))
+                        .values().stream()
+                        .map(set -> new ImmutablePair<>(labelSet, set));
+                })
                 .collect(Collectors.toList());
 
         // 状態から、状態が所属している集合を引けるようにする
@@ -71,10 +83,10 @@ public final class DfaSimplifier {
 
                 if (op.isPresent()) {
                     // 分割を行う
-                    for (List<DfaState> destinationGroup : op.get()) {
+                    for (List<DfaState> groupStates : op.get()) {
                         Set<DfaState> newSet = new HashSet<>();
 
-                        for (DfaState state : destinationGroup) {
+                        for (DfaState state : groupStates) {
                             newSet.add(state);
                             currentSet.remove(state);
                             stateSetMap.put(state, newSet); // 状態集合逆引きも更新

@@ -48,8 +48,8 @@ public class CharRange {
             case '\r': return "\\r";
         }
 
-        if (c <= 0x1F || (c >= 0x7F && c <= 0xA0))
-            return String.format("\\x%02X", c);
+        if (c <= 0x20 || (c >= 0x7F && c <= 0xA0))
+            return String.format("\\x%02X", (int) c);
 
         return String.valueOf(c);
     }
