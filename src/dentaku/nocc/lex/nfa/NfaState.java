@@ -23,8 +23,7 @@ public class NfaState {
         addOutgoingEdge(to, null);
     }
 
-    // TODO: unmodifiableSet
-    public NfaEdge[] getOutgoingEdges() {
-        return m_outgoingEdges.toArray(new NfaEdge[0]);
+    public Set<NfaEdge> getOutgoingEdges() {
+        return Collections.unmodifiableSet(m_outgoingEdges);
     }
 }

@@ -27,14 +27,17 @@ class RegexPlayground {
             )
         );
 
+        // 正規表現 -> NFA
         NfaRepr nfa = RegexToNfa.convert(decimalRegex);
         saveNfa(nfa.getStartState(), "DecimalNfa.dot");
 
+        // NFA -> DFA
         DfaState dfa = NfaToDfa.convert(nfa.getStartState());
 
         DfaStateLabelProvider stateLabelProvider = new DefaultDfaStateLabelProvider(nfa.getStartState());
         saveDfa(dfa, "DecimalDfa.dot", stateLabelProvider);
 
+        // DFA の最小化
         DfaState dfaSimplified = DfaSimplifier.simplify(dfa);
         saveDfa(dfaSimplified, "DecimalDfaSimplified.dot", stateLabelProvider);
     }

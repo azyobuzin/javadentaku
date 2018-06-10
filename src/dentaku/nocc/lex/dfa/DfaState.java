@@ -23,14 +23,12 @@ public class DfaState {
         m_includedNfaStates.add(nfaState);
     }
 
-    // TODO: unmodifiableSet
-    public DfaEdge[] getOutgoingEdges() {
-        return m_outgoingEdges.toArray(new DfaEdge[0]);
+    public Set<DfaEdge> getOutgoingEdges() {
+        return Collections.unmodifiableSet(m_outgoingEdges);
     }
 
-    // TODO: unmodifiableSet
-    public NfaState[] getIncludedNfaStates() {
-        return m_includedNfaStates.toArray(new NfaState[0]);
+    public Set<NfaState> getIncludedNfaStates() {
+        return Collections.unmodifiableSet(m_includedNfaStates);
     }
 
     public boolean isFinal() {
