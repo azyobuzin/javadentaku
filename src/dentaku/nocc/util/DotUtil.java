@@ -7,6 +7,8 @@ public final class DotUtil {
      * DOT 言語向けのエスケープ処理
      */
     public static String toDotString(String s) {
-        return "\"" + s.replace("\"", "\\\"") + "\"";
+        s = s.replace("\\", "\\\\")
+            .replace("\"", "\\\"");
+        return "\"" + s + "\"";
     }
 }

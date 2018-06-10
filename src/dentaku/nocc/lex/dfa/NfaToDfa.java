@@ -101,7 +101,7 @@ public final class NfaToDfa {
      */
     private static Map<Character, Set<NfaState>> createTransitionMap(Set<NfaState> sourceStateSet) {
         return sourceStateSet.stream()
-            .flatMap(state -> Arrays.stream(state.getOutgoingEdges()))
+            .flatMap(state -> state.getOutgoingEdges().stream())
             .filter(edge -> !edge.isEpsilon())
             .flatMap(edge -> {
                 CharRange charRange = edge.getLabel();

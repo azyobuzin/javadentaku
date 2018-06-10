@@ -36,7 +36,7 @@ public class DefaultDfaStateLabelProvider implements DfaStateLabelProvider {
 
     @Override
     public String getLabel(DfaState state) {
-        return Arrays.stream(state.getIncludedNfaStates())
+        return state.getIncludedNfaStates().stream()
             .mapToInt(m_stateMap::get)
             .sorted()
             .mapToObj(Integer::toString)

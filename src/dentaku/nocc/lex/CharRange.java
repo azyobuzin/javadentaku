@@ -20,29 +20,51 @@ public class CharRange {
     public char getEnd() { return m_end; }
 
     public CharRange getIntersection(CharRange other) {
-        char maxStart = m_start >= other.m_start ? m_start : other.m_start;
-        char minEnd = m_end <= other.m_end ? m_end : other.m_end;
+        char maxStart = getStart() >= other.getStart() ? getStart() : other.getStart();
+        char minEnd = getEnd() <= other.getEnd() ? getEnd() : other.getEnd();
         return maxStart <= minEnd ? new CharRange(maxStart, minEnd) : null;
+    }
+
+    public boolean contains(char c) {
+        return c >= getStart() && c <= getEnd();
     }
 
     @Override
     public String toString() {
-        return m_start == m_end
-                ? String.valueOf(m_start)
-                : String.format("[%c-%c]", m_start, m_end);
+        return getStart() == getEnd()
+            ? escapeChar(getStart())
+            : String.format("[%s-%s]", escapeChar(getStart()), escapeChar(getEnd()));
+    }
+
+    /**
+     * 表示できない文字をエスケープ
+     */
+    static String escapeChar(char c) {
+        switch (c) {
+            case '\b': return "\\b";
+            case '\t': return "\\t";
+            case '\n': return "\\n";
+            case '\f': return "\\f";
+            case '\r': return "\\r";
+        }
+
+        if (c <= 0x1F || (c >= 0x7F && c <= 0xA0))
+            return String.format("\\x%02X", c);
+
+        return String.valueOf(c);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CharRange) {
             CharRange other = (CharRange) obj;
-            return m_start == other.m_start && m_end == other.m_end;
+            return getStart() == other.getStart() && getEnd() == other.getEnd();
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return m_start << 16 | m_end;
+        return getStart() << 16 | getEnd();
     }
 }

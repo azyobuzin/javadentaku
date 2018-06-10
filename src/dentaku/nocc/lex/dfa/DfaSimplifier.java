@@ -22,12 +22,12 @@ public final class DfaSimplifier {
 
             DfaState state;
             while ((state = stack.pollFirst()) != null) {
-                DfaEdge[] edges = state.getOutgoingEdges();
+                Set<DfaEdge> edges = state.getOutgoingEdges();
 
                 // 受理状態と他の状態を分けて、さらに辺のラベルリストで分ける
                 (state.isFinal() ? finalStateMap : stateMap)
                     .computeIfAbsent(
-                        new EdgeLabelSet(Arrays.stream(edges).map(DfaEdge::getLabel)),
+                        new EdgeLabelSet(edges.stream().map(DfaEdge::getLabel)),
                         k -> new HashSet<>())
                     .add(state);
 
@@ -61,7 +61,7 @@ public final class DfaSimplifier {
                         .mapToObj(c -> currentSet.stream().collect(
                             // 遷移先状態集合でグルーピング
                             Collectors.groupingBy(state ->
-                                Arrays.stream(state.getOutgoingEdges())
+                                state.getOutgoingEdges().stream()
                                     .map(edge -> stateSetMap.get(edge.getTo()))
                                     .collect(Collectors.toSet()))
                         ))
@@ -97,7 +97,7 @@ public final class DfaSimplifier {
                     set -> set,
                     set -> {
                         DfaState newState = new DfaState();
-                        set.stream().flatMap(s -> Arrays.stream(s.getIncludedNfaStates()))
+                        set.stream().flatMap(s -> s.getIncludedNfaStates().stream())
                             .forEach(newState::includeNfaState);
                         return newState;
                     }));
@@ -107,7 +107,7 @@ public final class DfaSimplifier {
             final Set<DfaState> set = entry.getKey();
             final DfaState newState = entry.getValue();
 
-            set.stream().flatMap(state -> Arrays.stream(state.getOutgoingEdges()))
+            set.stream().flatMap(state -> state.getOutgoingEdges().stream())
                 .map(edge -> new ImmutablePair<>(newStateMap.get(stateSetMap.get(edge.getTo())), edge.getLabel()))
                 .collect(Collectors.groupingBy( // 遷移先でグルーピング
                     pair -> pair.item1,

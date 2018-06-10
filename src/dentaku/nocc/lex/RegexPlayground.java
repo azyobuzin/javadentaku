@@ -2,30 +2,17 @@ package dentaku.nocc.lex;
 
 import dentaku.nocc.lex.dfa.*;
 import dentaku.nocc.lex.nfa.*;
-import dentaku.nocc.lex.regex.*;
+import dentaku.nocc.lex.regex.RegexNode;
 
 import java.io.*;
 
-class RegexPlayground {
+/**
+ * 小数の正規表現について状態遷移図を出力
+ */
+class RegexPlayground extends LexPlaygroundBase {
     public static void main(String[] args) throws IOException {
-        // 小数の正規表現 ([0-9]+(\.[0-9]+)?|\.[0-9]+)
-        RegexNode integerRegex = RegexFactory.repeat1(RegexFactory.charRange('0', '9'));
-        RegexNode dotRegex = RegexFactory.charcter('.');
-        RegexNode decimalRegex = RegexFactory.choice(
-            RegexFactory.sequence(
-                integerRegex,
-                RegexFactory.maybe(
-                    RegexFactory.sequence(
-                        dotRegex,
-                        integerRegex
-                    )
-                )
-            ),
-            RegexFactory.sequence(
-                dotRegex,
-                integerRegex
-            )
-        );
+        // 小数の正規表現
+        RegexNode decimalRegex = DentakuLexicalAnalyzer.decimalRegexNode();
 
         // 正規表現 -> NFA
         NfaRepr nfa = RegexToNfa.convert(decimalRegex);
@@ -40,17 +27,5 @@ class RegexPlayground {
         // DFA の最小化
         DfaState dfaSimplified = DfaSimplifier.simplify(dfa);
         saveDfa(dfaSimplified, "DecimalDfaSimplified.dot", stateLabelProvider);
-    }
-
-    private static void saveNfa(NfaState startState, String fileName) throws IOException {
-        try (FileWriter output = new FileWriter(fileName)) {
-            NfaPrinter.writeDotTo(startState, output);
-        }
-    }
-
-    private static void saveDfa(DfaState startState, String fileName, DfaStateLabelProvider stateLabelProvider) throws IOException {
-        try (FileWriter output = new FileWriter(fileName)) {
-            DfaPrinter.writeDotTo(startState, output, stateLabelProvider);
-        }
     }
 }
