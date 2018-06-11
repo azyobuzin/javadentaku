@@ -1,0 +1,123 @@
+options {
+    STATIC = false;
+    DEBUG_PARSER = true;
+}
+
+PARSER_BEGIN(DentakuParser)
+
+package dentaku.cc;
+import dentaku.ast.*;
+
+public class DentakuParser {}
+
+PARSER_END(DentakuParser)
+
+SKIP: { " " | "\r" | "\n" | "\t" }
+
+TOKEN: {
+    <NUM: ((["0"-"9"])+ ("." (["0"-"9"])*)?) | ("." (["0"-"9"])+)>
+    | <PLUS: "+">
+    | <MINUS: "-">
+    | <TIMES: "*">
+    | <DIV: "/">
+    | <OPEN: "(">
+    | <CLOSE: ")">
+    | <EQUAL: "=">
+}
+
+public DentakuAstNode start() : {
+    DentakuAstNode node;
+}
+{
+    node = polynomialExpression()
+    <EQUAL>
+    { return node; }
+}
+
+// 一番優先度の高いもの（数値、括弧）
+private DentakuAstNode primaryExpression() : {
+    DentakuAstNode node;
+}
+{
+    (
+        node = number()
+        | node = parenthesized()
+    )
+    { return node; }
+}
+
+private NumberNode number() : {}
+{
+    <NUM>
+    {
+        double value = Double.parseDouble(token.image);
+        return new NumberNode(value);
+    }
+}
+
+private DentakuAstNode parenthesized() : {
+    DentakuAstNode node;
+}
+{
+    <OPEN>
+    node = polynomialExpression()
+    <CLOSE>
+    { return node; }
+}
+
+// primaryExpression にはマイナスをつけて負にすることができる
+// マイナスがついていれば、 {@link NegativeOperatorNode} として扱い、そうでなければ primaryExpression をそのまま返す
+private DentakuAstNode negative() : {
+    DentakuAstNode node;
+}
+{
+    (
+        (
+            <MINUS>
+            node = primaryExpression()
+            { node = new NegativeOperatorNode(node); }
+        )
+        | node = primaryExpression()
+    )
+    { return node; }
+}
+
+// 掛け算または割り算
+// * または / が続かなければ negative をそのまま返す
+private DentakuAstNode term() : {
+    DentakuAstNode left;
+    DentakuAstNode right;
+    BinaryOperator operator;
+}
+{
+    left = negative()
+    (
+        (
+            <TIMES> { operator = BinaryOperator.MULTIPLICATION; }
+            | <DIV> { operator = BinaryOperator.DIVISION; }
+        )
+        right = negative()
+        { left = new BinaryOperatorNode(left, right, operator); }
+    )*
+    { return left; }
+}
+
+// 足し算または引き算
+// + または - が続かなければ term をそのまま返す
+private DentakuAstNode polynomialExpression() : {
+    DentakuAstNode left;
+    DentakuAstNode right;
+    BinaryOperator operator;
+}
+{
+    left = term()
+    (
+        (
+            <PLUS> { operator = BinaryOperator.ADDITION; }
+            | <MINUS> { operator = BinaryOperator.SUBTRACTION; }
+        )
+        right = term()
+        { left = new BinaryOperatorNode(left, right, operator); }
+    )*
+    { return left; }
+}

@@ -41,17 +41,19 @@ public class LexicalAnalyzer<T> {
         // 最後に訪れた受理状態
         DfaState lastFinalState = currentState.isFinal() ? currentState : null;
 
+        int nextChar;
         while (true) {
-            int nextChar = m_reader.read();
+            nextChar = m_reader.read();
 
             // EOF の処理はしないということで
-            if (nextChar < 0) ThrowLexicalException(currentState, nextChar);
+            if (nextChar < 0) break;
 
+            final int c = nextChar; // ラムダ式用に final 化
             Optional<DfaEdge> opEdge = currentState.getOutgoingEdges().stream()
                 .filter(edge -> {
                     CharRange label = edge.getLabel();
                     // nextChar が CharRange の範囲内かどうか
-                    return nextChar >= label.getStart() && nextChar <= label.getEnd();
+                    return c >= label.getStart() && c <= label.getEnd();
                 })
                 .findAny();
 
@@ -63,15 +65,20 @@ public class LexicalAnalyzer<T> {
                     // 受理状態なら記憶しておく
                     lastFinalState = currentState;
                     m_reader.setCheckpoint();
+
+                    // これ以上遷移できないなら、ここで終わりなことが確定
+                    if (currentState.getOutgoingEdges().size() == 0)
+                        break;
                 }
             } else {
                 // 遷移先が見つからなくなったら読み取り終わり
-                if (lastFinalState == null) {
-                    // 1回も受理状態を通らなかったので読み取り失敗
-                    ThrowLexicalException(currentState, nextChar);
-                }
                 break;
             }
+        }
+
+        if (lastFinalState == null) {
+            // 1回も受理状態を通らなかったので読み取り失敗
+            ThrowLexicalException(currentState, nextChar);
         }
 
         // priority の値が一番小さい（一番優先される） mapper を取得
