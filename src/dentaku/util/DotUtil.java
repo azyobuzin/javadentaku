@@ -1,4 +1,4 @@
-package dentaku.nocc.util;
+package dentaku.util;
 
 public final class DotUtil {
     private DotUtil() { }

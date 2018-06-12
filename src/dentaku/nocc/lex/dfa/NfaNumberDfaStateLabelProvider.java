@@ -9,13 +9,13 @@ import java.util.stream.Collectors;
 /**
  * NFA の状態に幅優先で連番を振って、それをラベル名に使う
  */
-public class DefaultDfaStateLabelProvider implements DfaStateLabelProvider {
+public class NfaNumberDfaStateLabelProvider implements DfaStateLabelProvider {
     private final Map<NfaState, Integer> m_stateMap = new HashMap<>();
 
     /**
      * @param startNfaState NFA の初期状態
      */
-    public DefaultDfaStateLabelProvider(NfaState startNfaState) {
+    public NfaNumberDfaStateLabelProvider(NfaState startNfaState) {
         int index = 0;
         Queue<NfaState> queue = new ArrayDeque<>();
         queue.add(startNfaState);

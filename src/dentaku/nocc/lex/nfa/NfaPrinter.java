@@ -1,7 +1,7 @@
 package dentaku.nocc.lex.nfa;
 
 import dentaku.nocc.lex.CharRange;
-import dentaku.nocc.util.DotUtil;
+import dentaku.util.DotUtil;
 
 import java.io.*;
 import java.util.*;

@@ -16,6 +16,7 @@ class DentakuAutomatonPlayground extends LexPlaygroundBase {
         saveNfa(nfa, "DentakuNfa.dot");
 
         DfaState dfa = DfaSimplifier.simplify(NfaToDfa.convert(nfa));
-        saveDfa(dfa, "DentakuDfa.dot", new DefaultDfaStateLabelProvider(nfa));
+        saveDfa(dfa, "DentakuDfa.dot", new NfaNumberDfaStateLabelProvider(nfa));
+        saveDfa(dfa, "DentakuDfaSequential.dot", new SequentialDfaStateLabelProvider(dfa));
     }
 }

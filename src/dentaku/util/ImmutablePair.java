@@ -1,4 +1,4 @@
-package dentaku.nocc.util;
+package dentaku.util;
 
 import java.util.Objects;
 

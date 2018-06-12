@@ -8,12 +8,23 @@ public class DentakuParser implements DentakuParserConstants {
   final public DentakuAstNode start() throws ParseException {
     trace_call("start");
     try {DentakuAstNode node;
-      node = polynomialExpression();
+      node = expression();
       jj_consume_token(EQUAL);
 {if ("" != null) return node;}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("start");
+    }
+  }
+
+  final private DentakuAstNode expression() throws ParseException {
+    trace_call("expression");
+    try {DentakuAstNode node;
+      node = polynomialExpression();
+{if ("" != null) return node;}
+    throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("expression");
     }
   }
 
@@ -45,8 +56,7 @@ public class DentakuParser implements DentakuParserConstants {
     trace_call("number");
     try {
       jj_consume_token(NUM);
-double value = Double.parseDouble(token.image);
-        {if ("" != null) return new NumberNode(value);}
+{if ("" != null) return new NumberNode(token.image);}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("number");
@@ -57,7 +67,7 @@ double value = Double.parseDouble(token.image);
     trace_call("parenthesized");
     try {DentakuAstNode node;
       jj_consume_token(OPEN);
-      node = polynomialExpression();
+      node = expression();
       jj_consume_token(CLOSE);
 {if ("" != null) return node;}
     throw new Error("Missing return statement in function");
@@ -93,8 +103,8 @@ node = new NegativeOperatorNode(node);
     }
   }
 
-  final private DentakuAstNode term() throws ParseException {
-    trace_call("term");
+  final private DentakuAstNode monomialExpression() throws ParseException {
+    trace_call("monomialExpression");
     try {DentakuAstNode left;
     DentakuAstNode right;
     BinaryOperator operator;
@@ -133,7 +143,7 @@ left = new BinaryOperatorNode(left, right, operator);
 {if ("" != null) return left;}
     throw new Error("Missing return statement in function");
     } finally {
-      trace_return("term");
+      trace_return("monomialExpression");
     }
   }
 
@@ -142,7 +152,7 @@ left = new BinaryOperatorNode(left, right, operator);
     try {DentakuAstNode left;
     DentakuAstNode right;
     BinaryOperator operator;
-      left = term();
+      left = monomialExpression();
       label_2:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -171,7 +181,7 @@ operator = BinaryOperator.SUBTRACTION;
           jj_consume_token(-1);
           throw new ParseException();
         }
-        right = term();
+        right = monomialExpression();
 left = new BinaryOperatorNode(left, right, operator);
       }
 {if ("" != null) return left;}

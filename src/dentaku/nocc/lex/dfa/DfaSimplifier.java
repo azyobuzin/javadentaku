@@ -2,7 +2,7 @@ package dentaku.nocc.lex.dfa;
 
 import dentaku.nocc.lex.CharRange;
 import dentaku.nocc.lex.nfa.NfaState;
-import dentaku.nocc.util.ImmutablePair;
+import dentaku.util.ImmutablePair;
 
 import java.util.*;
 import java.util.stream.*;

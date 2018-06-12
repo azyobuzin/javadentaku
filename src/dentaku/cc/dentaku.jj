@@ -29,8 +29,16 @@ public DentakuAstNode start() : {
     DentakuAstNode node;
 }
 {
-    node = polynomialExpression()
+    node = expression()
     <EQUAL>
+    { return node; }
+}
+
+private DentakuAstNode expression() : {
+    DentakuAstNode node;
+}
+{
+    node = polynomialExpression()
     { return node; }
 }
 
@@ -50,8 +58,7 @@ private NumberNode number() : {}
 {
     <NUM>
     {
-        double value = Double.parseDouble(token.image);
-        return new NumberNode(value);
+        return new NumberNode(token.image);
     }
 }
 
@@ -60,7 +67,7 @@ private DentakuAstNode parenthesized() : {
 }
 {
     <OPEN>
-    node = polynomialExpression()
+    node = expression()
     <CLOSE>
     { return node; }
 }
@@ -84,7 +91,7 @@ private DentakuAstNode negative() : {
 
 // 掛け算または割り算
 // * または / が続かなければ negative をそのまま返す
-private DentakuAstNode term() : {
+private DentakuAstNode monomialExpression() : {
     DentakuAstNode left;
     DentakuAstNode right;
     BinaryOperator operator;
@@ -103,20 +110,20 @@ private DentakuAstNode term() : {
 }
 
 // 足し算または引き算
-// + または - が続かなければ term をそのまま返す
+// + または - が続かなければ monomialExpression をそのまま返す
 private DentakuAstNode polynomialExpression() : {
     DentakuAstNode left;
     DentakuAstNode right;
     BinaryOperator operator;
 }
 {
-    left = term()
+    left = monomialExpression()
     (
         (
             <PLUS> { operator = BinaryOperator.ADDITION; }
             | <MINUS> { operator = BinaryOperator.SUBTRACTION; }
         )
-        right = term()
+        right = monomialExpression()
         { left = new BinaryOperatorNode(left, right, operator); }
     )*
     { return left; }

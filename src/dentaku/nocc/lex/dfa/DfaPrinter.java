@@ -1,6 +1,6 @@
 package dentaku.nocc.lex.dfa;
 
-import dentaku.nocc.util.DotUtil;
+import dentaku.util.DotUtil;
 
 import java.io.*;
 import java.util.*;

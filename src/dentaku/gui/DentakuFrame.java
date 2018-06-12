@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 
 public class DentakuFrame extends JFrame {
     // 定数
+    private static final String WINDOW_TITLE = "電卓";
     private static final int INITIAL_WIDTH = 350;
     private static final int INITIAL_HEIGHT = 250;
     private static final int DISPLAY_LABEL_PADDING = 10;
@@ -23,6 +24,7 @@ public class DentakuFrame extends JFrame {
     private String m_inputText = "";
 
     public DentakuFrame(DentakuWorker worker) {
+        setTitle(WINDOW_TITLE);
         setSize(INITIAL_WIDTH, INITIAL_HEIGHT);
         Container pane = getContentPane();
 

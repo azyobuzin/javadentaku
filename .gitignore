@@ -54,3 +54,4 @@ fabric.properties
 # 出力結果
 /*.dot
 /*.png
+/*.svg

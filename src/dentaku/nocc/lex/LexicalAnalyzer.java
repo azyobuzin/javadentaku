@@ -3,7 +3,7 @@ package dentaku.nocc.lex;
 import dentaku.nocc.lex.dfa.*;
 import dentaku.nocc.lex.nfa.*;
 import dentaku.nocc.lex.regex.RegexNode;
-import dentaku.nocc.util.ImmutablePair;
+import dentaku.util.ImmutablePair;
 
 import java.io.IOException;
 import java.util.*;
