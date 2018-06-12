@@ -52,7 +52,7 @@ public class DentakuParser implements DentakuParserConstants {
     }
   }
 
-  final private NumberNode number() throws ParseException {
+  final private DentakuAstNode number() throws ParseException {
     trace_call("number");
     try {
       jj_consume_token(NUM);
@@ -83,12 +83,13 @@ public class DentakuParser implements DentakuParserConstants {
       case MINUS:{
         jj_consume_token(MINUS);
         node = primaryExpression();
-node = new NegativeOperatorNode(node);
+{if ("" != null) return new NegativeOperatorNode(node);}
         break;
         }
       case NUM:
       case OPEN:{
         node = primaryExpression();
+{if ("" != null) return node;}
         break;
         }
       default:
@@ -96,7 +97,6 @@ node = new NegativeOperatorNode(node);
         jj_consume_token(-1);
         throw new ParseException();
       }
-{if ("" != null) return node;}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("negative");

@@ -15,6 +15,7 @@ public class DentakuWorker implements AutoCloseable {
     private Consumer<DentakuWorkerResult> m_resultConsumer;
 
     public DentakuWorker() {
+        // 初期状態にする
         reset();
     }
 
@@ -52,9 +53,9 @@ public class DentakuWorker implements AutoCloseable {
     @Override
     public void close() {
         synchronized (m_lock) {
-            // スレッドに割り込んで終了させる
+            // 停止リクエストを送る
             if (m_workerThread != null) {
-                m_workerThread.interrupt();
+                m_workerThread.requestStop();
                 m_workerThread = null;
             }
 
@@ -130,7 +131,7 @@ public class DentakuWorker implements AutoCloseable {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             synchronized (m_lock) {
                 // 終了状態にして待機中のスレッドで例外を起こさせる
                 m_closed = true;
@@ -141,6 +142,7 @@ public class DentakuWorker implements AutoCloseable {
 
     private final class WorkerThread extends Thread {
         private final Reader m_reader;
+        private boolean m_stopRequested;
 
         public WorkerThread(Reader reader) {
             super(createWorkerThreadName());
@@ -167,18 +169,18 @@ public class DentakuWorker implements AutoCloseable {
                     // 結果を作成
                     DentakuWorkerResult result = DentakuWorkerResult.success(evaluatedValue);
 
-                    // 割り込みが発生しているなら値を返す必要はなく、終了
-                    if (Thread.interrupted()) {
-                        workerLog("Interrupted");
+                    // 停止リクエストが来ているなら終了
+                    if (m_stopRequested) {
+                        workerLog("Stop");
                         return;
                     }
 
                     handleResult(result);
                 }
             } catch (Throwable e) {
-                // スレッド割り込みのせいなら例外が発生するのが正常なので、そのまま終了
-                if (Thread.interrupted()) {
-                    workerLog("Interrupted");
+                // 停止リクエストが来ているなら、例外が発生するはずなので、そのまま終了
+                if (m_stopRequested) {
+                    workerLog("Stop");
                     return;
                 }
 
@@ -192,17 +194,20 @@ public class DentakuWorker implements AutoCloseable {
                 } else {
                     result = DentakuWorkerResult.unexpectedError();
                 }
-                // TODO: 巨大すぎる数字はどうなる？
 
-                if (!Thread.interrupted()) {
+                if (!m_stopRequested) {
                     handleResult(result);
 
-                    // Parser, Reader のどこかの状態が不正なので、完全にリセットする
+                    // Parser, Reader のうちどこかの状態が不正かもしれないので、完全にリセットする
                     reset();
                 }
             }
 
             workerLog("Exit");
+        }
+
+        public void requestStop() {
+            m_stopRequested = true;
         }
     }
 
