@@ -143,13 +143,13 @@ public class DentakuWorker implements AutoCloseable {
         private final Reader m_reader;
 
         public WorkerThread(Reader reader) {
-            super("dentaku.gui.DentakuWorker-" + threadNum());
+            super(createWorkerThreadName());
             m_reader = reader;
         }
 
         @Override
         public void run() {
-            System.out.println("Started: " + Thread.currentThread().getName());
+            workerLog("Started");
 
             try {
                 DentakuParser parser = new DentakuParser(m_reader);
@@ -159,7 +159,7 @@ public class DentakuWorker implements AutoCloseable {
                     DentakuAstNode ast = parser.start();
 
                     // 結果を出力しておく（デバッグ用）
-                    System.out.println(ast);
+                    workerLog(ast.toString());
 
                     // 式を評価
                     double evaluatedValue = DentakuEvaluator.evaluate(ast);
@@ -167,13 +167,20 @@ public class DentakuWorker implements AutoCloseable {
                     // 結果を作成
                     DentakuWorkerResult result = DentakuWorkerResult.success(evaluatedValue);
 
-                    // 割り込みが発生していない（まだ終了させられてない）なら結果を返す
-                    if (Thread.interrupted()) return;
+                    // 割り込みが発生しているなら値を返す必要はなく、終了
+                    if (Thread.interrupted()) {
+                        workerLog("Interrupted");
+                        return;
+                    }
+
                     handleResult(result);
                 }
             } catch (Throwable e) {
                 // スレッド割り込みのせいなら例外が発生するのが正常なので、そのまま終了
-                if (Thread.interrupted()) return;
+                if (Thread.interrupted()) {
+                    workerLog("Interrupted");
+                    return;
+                }
 
                 e.printStackTrace();
 
@@ -190,15 +197,30 @@ public class DentakuWorker implements AutoCloseable {
                 if (!Thread.interrupted()) {
                     handleResult(result);
 
-                    // Parser, PipedReader/Writer のどこかがおかしいので、完全にリセットする
+                    // Parser, Reader のどこかの状態が不正なので、完全にリセットする
                     reset();
                 }
             }
+
+            workerLog("Exit");
         }
     }
 
+    // 内部クラスに static メンバーを定義できないのでここに書く
     private static int m_threadNum;
 
-    private static synchronized int threadNum() { return m_threadNum++; }
+    /**
+     * スレッドに一意な名前を付ける
+     */
+    private static synchronized String createWorkerThreadName() {
+        return "dentaku.gui.DentakuWorker-" + m_threadNum++;
+    }
+
+    /**
+     * スレッド名とメッセージを出力する
+     */
+    private static void workerLog(String message) {
+        System.out.format("%s: %s\n", Thread.currentThread().getName(), message);
+    }
 }
 

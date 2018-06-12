@@ -11,9 +11,9 @@ public class DentakuFrame extends JFrame {
     private static final int INITIAL_HEIGHT = 250;
     private static final int DISPLAY_LABEL_PADDING = 10;
     private static final String INITIAL_DISPLAY_LABEL_TEXT = "0";
-    private static final char[] BUTTON_LABELS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '(', ')', '+', '-', '*', '/', '='};
-    private static final int BUTTONS_PANEL_ROWS = 3;
-    private static final int BUTTONS_PANEL_COLS = 6;
+    private static final char[] BUTTON_LABELS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '(', ')', '+', '-', '*', '/', '='};
+    private static final int BUTTONS_PANEL_ROWS = 4;
+    private static final int BUTTONS_PANEL_COLS = 5;
     private static final String CLEAR_BUTTON_LABEL = "AC";
 
     private final DentakuWorker m_worker;
